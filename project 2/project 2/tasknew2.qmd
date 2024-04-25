@@ -1,0 +1,118 @@
+---
+title: "Unraveling the Dynamics"
+subtitle: "The Wellbeing of Children Under 5"
+author: "Evan Kelly"
+date: "2024-04-25"
+format: html
+editor: visual
+---
+
+## **Introduction:**
+
+As a Data Analyst for UNICEF, I've analyzed data to shed light on a critical global issue: the well-being of children under the age of 5. In this report, I present insights derived from UNICEF's data sets.
+
+```{r}
+library(maps)
+library(ggplot2)
+library(dplyr)
+
+```
+
+load data
+
+```{r}
+library(readr)
+unicef_indicator_1 <-read_csv("unicef_indicator_1.csv")
+unicef_indicator_2 <-read_csv("unicef_indicator_2.csv")
+metadata=read_csv("unicef_metadata.csv")
+```
+
+## Exploring Global Patterns of Child Well-being
+
+Our first step takes us to a world map visualizing the 'unicef_indicator_1' variable, likely representing child well-being metrics globally. By merging world map data with indicator values, the map illustrates variations in well-being across countries. Darker shades indicate higher levels of well-being, while lighter shades suggest areas of concern. Through this visualization, patterns and disparities in child well-being become apparent, guiding further analysis and action. Regions with consistently high or low indicator values stand out, signaling areas for targeted interventions. The map serves as a powerful tool for understanding the global landscape of child well-being and identifying priorities for policy and advocacy efforts. Overall, it underscores the importance of addressing inequalities and promoting the well-being of children worldwide.
+
+```{r}
+library(rnaturalearth)
+library(sf)
+library(ggplot2)
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+merged_data <- merge(world, unicef_indicator_1, by.x = "iso_a3", by.y = "alpha_3_code", all.x = TRUE)
+ggplot() +
+  geom_sf(data = merged_data, aes(fill = obs_value)) +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(title = "Choropleth Map", fill = "Indicator Value") +
+  theme_void()
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+### **Analyzing Top 10 Countries**
+
+Next, we delve deeper into the data to uncover insights from the top 10 countries with the highest average values of the 'Population under age 5' indicator. By examining the nuances within these nations, we identify patterns and disparities that highlight the diverse challenges faced by children in different socio-economic contexts. Through this analysis, we aim to shed light on the factors influencing child well-being outcomes and advocate for targeted interventions to address inequalities.
+
+```{r}
+
+# Calculate average values by country
+avg_values <- unicef_indicator_2 %>%
+  group_by(country) %>%
+  summarize(avg_value = mean(obs_value))
+
+# Select top 10 countries with the highest average values
+top_countries <- avg_values %>%
+  top_n(10, wt = avg_value)
+
+# Filter original data to include only top countries
+filtered_data <- unicef_indicator_2 %>%
+  filter(country %in% top_countries$country)
+
+# Plot
+top_bar_chart <- ggplot(filtered_data, aes(x = reorder(country, obs_value), y = obs_value, fill = sex)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs(title = "Average Values of 'Population under age 5' Indicator for Top 10 Countries",
+       x = "Country", y = "Average Value",
+       fill = "Sex")
+print(top_bar_chart)
+```
+
+## **Understanding Correlations**
+
+### **Exploring Socio-economic Factors**
+
+Our journey continues as we explore the relationship between GDP per capita and life expectancy. By plotting these variables on a scatter plot, we seek to understand the complex interplay between economic prosperity and health outcomes. This analysis not only uncovers correlations but also underscores the importance of addressing socio-economic disparities as a fundamental component of improving child well-being globally.
+
+```{r}
+library(ggplot2)
+
+# Create the scatter plot
+scatter_plot <- ggplot(metadata, aes(x = `GDP per capita (constant 2015 US$)`, y = `Life expectancy at birth, total (years)`)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Relationship between GDP per Capita and Life Expectancy",
+       x = "GDP per Capita (constant 2015 US$)",
+       y = "Life Expectancy at Birth (total years)")
+
+# Print the scatter plot
+print(scatter_plot)
+
+
+```
+
+## **Monitoring Trends**
+
+### **Tracking Progress Over Time**
+
+Finally, we turn our attention to the trend of the 'Population under age 5' indicator over time. Through a time series analysis, we observe how child well-being metrics have evolved and fluctuated over the years. This longitudinal perspective allows us to identify areas of progress as well as persistent challenges, informing our efforts to shape policies and interventions that prioritize the needs of children today and in the future.
+
+```{r}
+
+time_series <- ggplot(unicef_indicator_2, aes(x = time_period, y = obs_value)) +
+  geom_line() +
+  labs(title = "Trend of 'Population under age 5' Indicator Over Time",
+       x = "Year", y = "Population under age 5")
+print(time_series)
+```
+
+## **Conclusion**
+
+As we finish our journey, let's think about what we've learned from the data. By using information and speaking up for what's right, we can all help make sure every young child has what they need to grow up healthy and happy. Let's stay together in our promise to support the rights and health of children under 5, making tomorrow brighter for everyone..
